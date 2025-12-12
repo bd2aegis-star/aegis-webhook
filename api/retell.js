@@ -5,16 +5,16 @@ export default async function handler(req, res) {
     console.log("Incoming Retell Event:", event);
     console.log("Full Payload:", JSON.stringify(req.body, null, 2));
 
-    // Only send email once analysis is complete
+    // Only send email after final analysis
     if (event === "call_analyzed") {
-      const analysis = req.body.analysis || {};
+      const custom = req.body.analysis?.custom_analysis || {};
 
-      const name = analysis.name || "Not Provided";
-      const phone = analysis.phone || "Not Provided";
-      const location = analysis.location || "Not Provided";
-      const requirement = analysis.requirement || "Not Provided";
+      const name = custom.name || "Not Provided";
+      const phone = custom.phone || "Not Provided";
+      const location = custom.location || "Not Provided";
+      const requirement = custom.requirement || "Not Provided";
 
-      // Send email using your email API endpoint
+      // Send email
       await fetch("https://aegis-webhook.vercel.app/api/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
         })
       });
 
-      console.log("Email sent successfully");
+      console.log("Email sent successfully with extracted fields");
     }
 
     res.status(200).json({ success: true });
