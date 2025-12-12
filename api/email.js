@@ -1,45 +1,31 @@
-import nodemailer from "nodemailer";
+// gmail.js
+const nodemailer = require("nodemailer");
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Only POST allowed" });
-  }
-
-  const { name, phone, location, purpose } = req.body;
-
-  if (!name || !phone) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
+async function sendEmail({ to, subject, text, html }) {
   try {
-    // Gmail SMTP Transport
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASSWORD,
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
       },
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: "marketing@aegis-lifesciences.com",
-      subject: "New Caller Lead Received",
-      html: `
-        <h2>New Caller Lead</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
-        <p><strong>Location:</strong> ${location || "Not provided"}</p>
-        <p><strong>Purpose:</strong> ${purpose || "Not provided"}</p>
-      `,
+      from: process.env.GMAIL_USER,
+      to,
+      subject,
+      text,
+      html,
     };
 
-    await transporter.sendMail(mailOptions);
-
-    return res.status(200).json({ success: true, message: "Email sent successfully" });
-
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent: " + info.response);
+    return { success: true, info };
   } catch (error) {
-    console.error("Email sending failed:", error);
-    return res.status(500).json({ error: "Email sending failed" });
+    console.error("Email error:", error);
+    return { success: false, error: error.message || error };
   }
 }
+
+module.exports = { sendEmail };
